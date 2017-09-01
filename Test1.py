@@ -70,7 +70,6 @@ def initsheet(worksheet):
 
 
 def main():
-    tic = time.clock()
     file = 'C:/Test/Test.xlsx'
     workbook = xlsxwriter.Workbook(file)
     worksheet = workbook.add_worksheet('KOSPI')
@@ -82,27 +81,23 @@ def main():
     get_stockinfo(worksheet, 'Q')
 
     workbook.close()
-    toc = time.clock()
-
-    print(toc - tic)
-
+    
 if __name__ == "__main__":
+    tic = time.clock()
     main()
-
+    toc = time.clock()
+    print(toc - tic)
+    
 '''
 * 2012 2013 2014 2015 2016 2017 2018 2019 : 2017 col 5
 * ROW : PER 25 PBR 27 배당 29
-
-Index(['매출액', '영업이익', '세전계속사업이익', '당기순이익', '당기순이익(지배)', 
-       '당기순이익(비지배)', '자산총계', '부채총계', '자본총계', '자본총계(지배)', 
-       '자본총계(비지배)', '자본금', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름', 
-       'CAPEX', 'FCF', '이자발생부채', '영업이익률', '순이익률', 
-       'ROE(%)','ROA(%)', '부채비율', '자본유보율', 'EPS(원)', 
-       'PER(배)', 'BPS(원)', 'PBR(배)', '현금DPS(원)', '현금배당수익률', 
-       '현금배당성향(%)', '발행주식수(보통주)'],
-      dtype='object', name='주요재무정보')
-
-* code: 종목코드
+'매출액', '영업이익', '세전계속사업이익', '당기순이익', '당기순이익(지배)', 
+'당기순이익(비지배)', '자산총계', '부채총계', '자본총계', '자본총계(지배)', 
+'자본총계(비지배)', '자본금', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름', 
+'CAPEX', 'FCF', '이자발생부채', '영업이익률', '순이익률', 
+'ROE(%)','ROA(%)', '부채비율', '자본유보율', 'EPS(원)', 
+'PER(배)', 'BPS(원)', 'PBR(배)', '현금DPS(원)', '현금배당수익률', 
+'현금배당성향(%)', '발행주식수(보통주)'
 * fin_type = '0': 재무제표 종류 (0: 주재무제표, 1: GAAP개별, 2: GAAP연결, 3: IFRS별도, 4:IFRS연결)
 * freq_type = 'Y': 기간 (Y:년, Q:분기)
 '''
