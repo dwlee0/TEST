@@ -1,18 +1,16 @@
+#-*- coding: utf-8 -*-
 from bs4 import BeautifulSoup
 import urllib.request
 import xlsxwriter
-import time
 
-def get_stockinfo(worksheet, KOS):
+
+def get_stockinfo(worksheet):
     row = 1
     col = 0
     row1 = 1
-    if KOS == 'P': pages = 47
-    if KOS == 'Q': pages = 43
 
-    for i in range(1, pages):  #47
-        url_tmp = 'http://finance.daum.net/quote/marketvalue.daum?stype=%s&page=%s'
-        url = url_tmp % (KOS, str(i))
+    for i in range(1, 92):
+        url = 'http://finance.daum.net/quote/marketvalue.daum?stype=KOS&page=%s' % (str(i))
         page = urllib.request.urlopen(url)
         soup = BeautifulSoup(page.read().decode('utf-8'), "html.parser")
         elements = soup.findAll('td', {'class': 'txt'})
@@ -21,10 +19,12 @@ def get_stockinfo(worksheet, KOS):
         for e in elements:
             stock_code = e.find('a')['href'][-6:]
             stock_name = e.find('a').contents[0]
+
             worksheet.write(row, 0, stock_code)
             worksheet.write(row, 1, stock_name)
-
+            print(row)
             [per, pbr, bae] = get_detailinfo(stock_code)
+            print(per, pbr, bae)
             worksheet.write(row, col + 8, per)
             worksheet.write(row, col + 9, pbr)
             worksheet.write(row, col + 10, bae)
@@ -47,15 +47,14 @@ def get_detailinfo(code):
 
     data = soup.findAll('td', {'class': 'num'})
 
-    per2017 = data[25*8 + 5].text
-    pbr2017 = data[27*8 + 5].text
-    bae2017 = data[29*8 + 5].text
+    per2017 = data[26 * 8 + 4].text
+    pbr2017 = data[28 * 8 + 4].text
+    bae2017 = data[30 * 8 + 4].text
 
     return [per2017, pbr2017, bae2017]
 
 
 def initsheet(worksheet):
-
     worksheet.write(0, 0, '종목코드')
     worksheet.write(0, 1, '종목명')
     worksheet.write(0, 2, '순위')
@@ -70,24 +69,17 @@ def initsheet(worksheet):
 
 
 def main():
-    file = 'C:/Test/Test.xlsx'
+    file = 'U:/99_Temp/Test.x'
     workbook = xlsxwriter.Workbook(file)
-    worksheet = workbook.add_worksheet('KOSPI')
+    worksheet = workbook.add_worksheet('KOS')
     initsheet(worksheet)
-    get_stockinfo(worksheet, 'P')
-
-    worksheet = workbook.add_worksheet('KOSDAQ')
-    initsheet(worksheet)
-    get_stockinfo(worksheet, 'Q')
-
+    get_stockinfo(worksheet)
     workbook.close()
-    
+
+
 if __name__ == "__main__":
-    tic = time.clock()
     main()
-    toc = time.clock()
-    print(toc - tic)
-    
+
 '''
 * 2012 2013 2014 2015 2016 2017 2018 2019 : 2017 col 5
 * ROW : PER 25 PBR 27 배당 29
