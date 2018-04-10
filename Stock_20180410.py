@@ -3,19 +3,21 @@ from bs4 import BeautifulSoup
 import xlsxwriter
 import re
 import requests
+import time
 
 
 def get_stockinfo(worksheet):
-    row = 1
-    col = 0
-    row1 = 1
 
-    for i in range(1, 92):
+    row = 1
+
+    for i in range(1, 92): #92
         url = 'http://finance.daum.net/quote/marketvalue.daum?stype=KOS&page=%s' % (str(i))
         page = requests.get(url).text
         soup = BeautifulSoup(page, 'lxml')
         elements = soup.findAll('td', {'class': 'txt'})
         price = soup.findAll('td', {'class': 'num'})
+
+        row1 = 1
 
         for e in elements:
             stock_code = e.find('a')['href'][-6:]
@@ -23,22 +25,18 @@ def get_stockinfo(worksheet):
 
             worksheet.write(row, 0, stock_code)
             worksheet.write(row, 1, stock_name)
+
+            for j in range(0, 6):
+                worksheet.write(row, j + 2, price[6 * (row1 - 1) + j].text)
+
             [per, pbr, bae] = get_detailinfo(stock_code)
 
-            worksheet.write(row, col + 8, per)
-            worksheet.write(row, col + 9, pbr)
-            worksheet.write(row, col + 10, bae)
-
-            print(row)
+            worksheet.write(row, 8, per)
+            worksheet.write(row, 9, pbr)
+            worksheet.write(row, 10, bae)
 
             row += 1
-
-        for e in price:
-            col += 1
-            worksheet.write(row1, col + 1, e.text)
-            if col == 6:
-                col = 0
-                row1 += 1
+            row1 += 1
 
 
 def get_detailinfo(code):
@@ -55,7 +53,6 @@ def get_detailinfo(code):
     pbr2017 = cfd[3][0][12][3]
     bae2017 = cfd[3][0][14][3]
 
-    print(per2017, pbr2017, bae2017)
     return [per2017, pbr2017, bae2017]
 
 
@@ -83,4 +80,8 @@ def main():
 
 
 if __name__ == "__main__":
+    tic = time.clock()
     main()
+    toc = time.clock()
+    print(toc-tic)
+    # 331.56
