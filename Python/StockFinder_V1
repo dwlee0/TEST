@@ -1,0 +1,125 @@
+#-*- coding: utf-8 -*-
+from bs4 import BeautifulSoup
+import xlsxwriter
+import re
+import requests
+import time
+
+
+def get_stockinfo(worksheet):
+
+    row = 1
+
+    for i in range(1, 80): #92
+        url = 'http://finance.daum.net/quote/marketvalue.daum?stype=KOS&page=%s' % (str(i))
+        page = requests.get(url).text
+        soup = BeautifulSoup(page, 'lxml')
+        elements = soup.findAll('td', {'class': 'txt'})
+        price = soup.findAll('td', {'class': 'num'})
+
+        row1 = 1
+
+        for e in elements:
+            stock_code = e.find('a')['href'][-6:]
+            [per, pbr, bae] = get_detailinfo(stock_code)
+            [foreign1d, gigwan1d, foreign5d, gigwan5d] = get_foreigndata(stock_code)
+
+            worksheet.write(row, 0, stock_code)
+            worksheet.write(row, 1, e.text)         # name
+
+            for j in range(0, 5):  #6
+                worksheet.write(row, j + 2, price[6 * (row1 - 1) + j].text)
+
+            worksheet.write(row, 8, per)
+            worksheet.write(row, 9, pbr)
+            worksheet.write(row, 10, bae)
+            worksheet.write(row, 11, foreign1d)
+            worksheet.write(row, 12, foreign5d)
+            # worksheet.write(row, 13, foreign10d)
+            worksheet.write(row, 14, gigwan1d)
+            worksheet.write(row, 15, gigwan5d)
+            # worksheet.write(row, 16, gigwan10d)
+
+            row += 1
+            row1 += 1
+
+
+def get_detailinfo(code):
+
+    url = 'http://wisefn.stock.daum.net/company/cF1001.aspx?cmp_cd=%s&finGubun=MAIN' % code
+    page = requests.get(url).text
+    soup = BeautifulSoup(page, 'lxml')
+    p = re.compile("changeFinData.*?\;", re.DOTALL)
+    cfd_list = p.findall(soup.prettify())
+    cfd_str = cfd_list[0].replace('\n', '').replace('changeFinData = ', '').replace(';', '')
+    cfd = eval(cfd_str)[3][0]       # [3][0 연간 1 분기]
+
+    per2017 = cfd[10][3]
+    pbr2017 = cfd[12][3]
+    bae2017 = cfd[14][3]
+
+    return [per2017, pbr2017, bae2017]
+
+
+def get_foreigndata(code):
+
+    url = 'http://finance.daum.net/item/foreign_yyyymmdd.daum?code=%s' % code
+    page = requests.get(url).text
+    soup = BeautifulSoup(page, 'lxml')
+    price = soup.findAll('td', {'class': 'num'})
+    foreign1d = price[2].text.replace(',', '')
+    gigwan1d = price[3].text.replace(',', '')
+
+    foreign5d = 0
+    gigwan5d = 0
+    for i in range(0, 5):
+        # print(price[i * 7 + 2])
+        # print(price[i * 7 + 3])
+        foreign5d = foreign5d + int(price[i*7 + 2].text.replace(',', ''))
+        gigwan5d = gigwan5d + int(price[i*7 + 3].text.replace(',', ''))
+
+    # foreign10d = foreign5d
+    # gigwan10d = gigwan5d
+    #
+    # for i in range(5, 10):
+    #     foreign10d = foreign10d + int(price[i*7 + 2].text.replace(',', ''))
+    #     gigwan10d = gigwan10d + int(price[i*7 + 3].text.replace(',', ''))
+
+    return [foreign1d, gigwan1d, foreign5d, gigwan5d]
+
+
+def initsheet(worksheet):
+    worksheet.write(0, 0, '종목코드')
+    worksheet.write(0, 1, '종목명')
+    worksheet.write(0, 2, '순위')
+    worksheet.write(0, 3, '현재가')
+    worksheet.write(0, 4, '전일대비')
+    worksheet.write(0, 5, '등락률')
+    worksheet.write(0, 6, '시가총액')
+    # worksheet.write(0, 7, '총주식')
+    worksheet.write(0, 8, 'PER')
+    worksheet.write(0, 9, 'PBR')
+    worksheet.write(0, 10, '배당률')
+    worksheet.write(0, 11, '외인1일')
+    worksheet.write(0, 12, '외인5일')
+    worksheet.write(0, 13, '외인10일')
+    worksheet.write(0, 14, '기관1일')
+    worksheet.write(0, 15, '기관5일')
+    worksheet.write(0, 16, '기관10일')
+
+
+def main():
+    file = 'U:/99_Temp/Test.x'
+    workbook = xlsxwriter.Workbook(file)
+    worksheet = workbook.add_worksheet('KOS')
+    initsheet(worksheet)
+    get_stockinfo(worksheet)
+    workbook.close()
+
+
+if __name__ == "__main__":
+    tic = time.clock()
+    main()
+    toc = time.clock()
+    print(toc-tic)
+    # 317
